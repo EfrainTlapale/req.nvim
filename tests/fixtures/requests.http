@@ -1,0 +1,50 @@
+###
+
+@AUTH_TOKEN = token-abc
+@BASE_URL = localhost:{{PORT}}
+@SERVICE_ID = MG123
+@ACCOUNT_SID = AC456
+@ACCOUNT_TOKEN = secret789
+@hook_url = https://example.com/api/webhook
+@callback_url = https://example.com/api/status-callback
+
+
+###
+
+# @name getService
+
+GET {{BASE_URL}}/v1/Services/{{SERVICE_ID}} HTTP/1.1
+Authorization: Basic {{ACCOUNT_SID}}:{{ACCOUNT_TOKEN}}
+
+
+###
+
+# @name setHooks
+
+POST {{BASE_URL}}/v1/Services/{{SERVICE_ID}} HTTP/1.1
+Authorization: Basic {{ACCOUNT_SID}}:{{ACCOUNT_TOKEN}}
+Content-Type: application/x-www-form-urlencoded
+
+InboundRequestUrl={{hook_url}}&
+StatusCallback={{callback_url}}
+
+
+###
+
+// @name createThing
+@local = overridden
+POST http://{{BASE_URL}}/things
+  ?a=1
+  &b={{local}}
+Content-Type: application/json
+Authorization: {{AUTH_TOKEN}}
+
+{
+  "id": "{{SERVICE_ID}}",
+  "env": "{{envVar}}"
+}
+
+# trailing note, not part of the body
+
+###
+GET {{BASE_URL}}/status/404
