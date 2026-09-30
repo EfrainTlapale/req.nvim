@@ -72,7 +72,7 @@ timings), `F` jq filter (empty resets), `q` close.
 
 ```lua
 {
-  dir = "~/dev/req.nvim",
+  dir = "EfrainTlapale/req.nvim",
   ft = { "http", "rest" },
   opts = {
     split = "vertical", -- or "horizontal"
