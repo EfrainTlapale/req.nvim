@@ -72,8 +72,11 @@ timings), `F` jq filter (empty resets), `q` close.
 
 ```lua
 {
-  dir = "EfrainTlapale/req.nvim",
-  ft = { "http", "rest" },
+  "EfrainTlapale/req.nvim",
+  ft = "http",
+  init = function()
+    vim.filetype.add({ extension = { rest = "http" } })
+  end,
   opts = {
     split = "vertical", -- or "horizontal"
     follow_redirects = false,
