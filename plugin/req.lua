@@ -7,6 +7,7 @@ local SUBCOMMANDS = {
   run = "run",
   cancel = "cancel",
   copy = "copy",
+  format = "format",
   from_curl = "from_curl",
   search = "search",
   env = "set_env",
@@ -49,6 +50,14 @@ vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("req.filetype", { clear = true }),
   pattern = "http",
   callback = function(args) highlight.attach(args.buf) end,
+})
+vim.api.nvim_create_autocmd("BufWritePre", {
+  group = vim.api.nvim_create_augroup("req.format", { clear = true }),
+  callback = function(args)
+    if vim.bo[args.buf].filetype == "http" and require("req").options.format_on_save then
+      require("req").format(args.buf)
+    end
+  end,
 })
 for _, buf in ipairs(vim.api.nvim_list_bufs()) do
   local opened_before_plugin_loaded = vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype == "http"

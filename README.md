@@ -60,10 +60,14 @@ Pick the environment with `:Req env` (or `:Req env dev`).
 
 ## Commands
 
-`:Req run | cancel | copy | from_curl | search | env [name] | close | jump_next | jump_prev`
+`:Req run | cancel | copy | format | from_curl | search | env [name] | close | jump_next | jump_prev`
 
-Lua: `require("req").run()`, `.copy()`, `.from_curl()`, `.search()`,
+Lua: `require("req").run()`, `.copy()`, `.format()`, `.from_curl()`, `.search()`,
 `.set_env()`, `.close()`, `.jump_next()`, `.jump_prev()`, `.cancel()`.
+
+`format` pretty-prints request bodies whose `Content-Type` is JSON using `jq`
+(set `format_on_save = true` to run it on `:write`). Only those body lines are
+touched; bodies `jq` can't parse, such as an unquoted `{{var}}`, are left as written.
 
 Response window keys: `B` body, `H` headers, `I` request info (curl command,
 timings), `F` jq filter (empty resets), `q` close.
@@ -83,6 +87,7 @@ timings), `F` jq filter (empty resets), `q` close.
     insecure = false,
     timeout_seconds = nil,
     format_json = true,
+    format_on_save = false, -- pretty-print JSON request bodies with jq on :write
     default_env = nil,
   },
   keys = {

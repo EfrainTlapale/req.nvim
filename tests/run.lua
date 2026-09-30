@@ -76,6 +76,93 @@ test("parser: bare URL means GET, body file", function()
   eq(d.requests[1].body_file, "./payload.json")
 end)
 
+test("parser: inline body line range", function()
+  local r = by_name.createThing
+  eq(table.concat(fixture, "\n", r.body_start, r.body_stop), r.body)
+  eq(parser.parse({ "POST https://x.test", "", "< ./payload.json" }).requests[1].body_start, nil)
+end)
+
+test("format: pretty-prints JSON bodies only", function()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "POST https://x.test/a",
+    "content-type: application/json",
+    "",
+    '{"eventId": "e1", "guestId": "g1"}',
+    "# trailing note",
+    "",
+    "###",
+    "POST https://x.test/b",
+    "Content-Type: application/json",
+    "",
+    '{"n": {{count}}}',
+    "",
+    "###",
+    "POST https://x.test/c",
+    "Content-Type: application/x-www-form-urlencoded",
+    "",
+    "a=1&",
+    "b=2",
+    "",
+    "###",
+    "POST https://x.test/d",
+    "Content-Type: application/x-ndjson",
+    "",
+    '{"a":1}',
+    '{"a":2}',
+    "",
+    "###",
+    "POST https://x.test/e",
+    "Content-Type: application/vnd.api+json; charset=utf-8",
+    "",
+    '[1,2]',
+  })
+  require("req").format(buf)
+  eq(vim.api.nvim_buf_get_lines(buf, 0, -1, false), {
+    "POST https://x.test/a",
+    "content-type: application/json",
+    "",
+    "{",
+    '  "eventId": "e1",',
+    '  "guestId": "g1"',
+    "}",
+    "# trailing note",
+    "",
+    "###",
+    "POST https://x.test/b",
+    "Content-Type: application/json",
+    "",
+    '{"n": {{count}}}',
+    "",
+    "###",
+    "POST https://x.test/c",
+    "Content-Type: application/x-www-form-urlencoded",
+    "",
+    "a=1&",
+    "b=2",
+    "",
+    "###",
+    "POST https://x.test/d",
+    "Content-Type: application/x-ndjson",
+    "",
+    '{"a":1}',
+    '{"a":2}',
+    "",
+    "###",
+    "POST https://x.test/e",
+    "Content-Type: application/vnd.api+json; charset=utf-8",
+    "",
+    "[",
+    "  1,",
+    "  2",
+    "]",
+  })
+  local tick = vim.b[buf].changedtick
+  require("req").format(buf)
+  eq(vim.b[buf].changedtick, tick, "already formatted buffer is untouched")
+  vim.api.nvim_buf_delete(buf, { force = true })
+end)
+
 write_json(dir .. "/http-client.env.json", {
   ["$shared"] = { envVar = "shared", PORT = "1" },
   dev = { envVar = "from-dev" },

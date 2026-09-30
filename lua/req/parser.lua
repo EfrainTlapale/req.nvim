@@ -13,6 +13,8 @@ local M = {}
 ---@field headers req.Header[]
 ---@field body string|nil
 ---@field body_file string|nil
+---@field body_start integer|nil first buffer line of an inline body
+---@field body_stop integer|nil
 ---@field vars table<string, string>
 ---@field line integer
 ---@field start integer
@@ -121,7 +123,9 @@ local function parse_section(lines, start, stop)
   if first <= last then
     local body = table.concat(lines, "\n", first, last)
     req.body_file = first == last and body:match("^%s*<%s+(%S.-)%s*$") or nil
-    req.body = not req.body_file and body or nil
+    if not req.body_file then
+      req.body, req.body_start, req.body_stop = body, first, last
+    end
   end
 
   return req, vars

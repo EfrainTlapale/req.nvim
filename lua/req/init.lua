@@ -14,6 +14,7 @@ local defaults = {
   insecure = false,
   timeout_seconds = nil, ---@type number|nil
   format_json = true,
+  format_on_save = false, -- pretty-print JSON request bodies with jq when saving
   default_env = nil, ---@type string|nil
 }
 
@@ -125,6 +126,33 @@ function M.set_env(name)
 end
 
 M.close = ui.close
+
+local function has_json_body(req)
+  local content_type = parser.get_header(req.headers, "content-type")
+  return req.body_start ~= nil and content_type ~= nil and content_type:lower():match("[/+]json%f[%W]") ~= nil
+end
+
+---Pretty-prints JSON request bodies with jq. Bodies jq can't parse (unquoted
+---{{vars}}, comments) are left as written.
+---@param buf integer|nil
+function M.format(buf)
+  buf = buf or 0
+  if vim.fn.executable("jq") == 0 then
+    util.notify("jq not found, cannot format bodies", vim.log.levels.WARN)
+    return
+  end
+  local requests = parser.parse_buffer(buf).requests
+  for i = #requests, 1, -1 do -- bottom-up so earlier body ranges stay valid
+    local req = requests[i]
+    local formatted = has_json_body(req) and util.jq(".", req.body)
+    if formatted then
+      local lines = vim.split(vim.trim(formatted), "\n", { plain = true })
+      if not vim.deep_equal(lines, vim.split(req.body, "\n", { plain = true })) then
+        vim.api.nvim_buf_set_lines(buf, req.body_start - 1, req.body_stop, false, lines)
+      end
+    end
+  end
+end
 
 ---@param opts req.Options|nil
 function M.setup(opts)
